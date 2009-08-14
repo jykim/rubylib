@@ -65,7 +65,7 @@ class String
 end
 
 class Array
-  include Statistics
+  include Statistics, Table
   include ValueArray, ProbabilityDistributionArray
   # Collapse the outermost array
   # [[1].[2],[[3]]].collapse -> [1,2,[3]]
