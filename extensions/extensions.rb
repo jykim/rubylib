@@ -1,3 +1,4 @@
+load 'extensions/table.rb'
 load 'extensions/statistics.rb'
 load 'extensions/probability.rb'
 load 'extensions/entropy.rb'
