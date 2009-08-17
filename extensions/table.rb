@@ -10,7 +10,7 @@ module Table
     data = data.map{|e|[e]} if data[0].class != Array
     raise ArgumentError, "Invalid summary argument" if !titles.respond_to?(o[:summary])
     raise ArgumentError, "Inconsistent size!" if [titles.size].concat(data.map{|e|e.size}).uniq.size > 1
-    raise ArgumentError, "Incorrect data size!" if data.size + 2 != size
+    raise ArgumentError, "Incorrect data size! (#{data.size}+2=#{size})" if data.size + 2 != size
     self[0].concat(titles)
     1.upto(size-2) do |i|
       self[i].concat(data[i-1])
