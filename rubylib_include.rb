@@ -1,0 +1,12 @@
+require 'rubygems'
+require 'ruby-debug'
+require 'test/unit'
+require 'extensions/extensions'
+require 'globals/global'
+require 'ir/language_model'
+require 'ir/inference_network'
+require 'ir/stemmer'
+require 'ir/stopwords'
+require 'ir/collection'
+require 'ir/document'
+
