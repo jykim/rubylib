@@ -1,12 +1,12 @@
 class DataError < Exception
   def initialize(msg)
-    err "[DataError] #{msg}"
+    error "[DataError] #{msg}"
   end
 end
 
 class ExternalError < Exception
   def initialize(msg)
-    err "[ExternalError] #{msg}"
+    error "[ExternalError] #{msg}"
   end
 end
 

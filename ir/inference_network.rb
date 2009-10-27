@@ -1,20 +1,29 @@
 module InferenceNetwork
   include Math
   PTN_OP = /\#(wsum|combine)/
-  PTN_NODE = /([\d\.]+?) (#{LanguageModel::PTN_TERM})\.\((\w+)\)/
+  PTN_NODE = /(#{LanguageModel::PTN_TERM})\.\((\w+)\)/
+  PTN_WNODE = /([\d\.]+?) (#{LanguageModel::PTN_TERM})\.\((\w+)\)/
   def self.eval_indri_query(query)
     #debugger
-    result = query.strip.gsub(PTN_OP,',op_\1').
-      gsub(PTN_NODE,'[\1,node_ql(\'\2\',d.flm[\'\3\'])],').gsub(/\s/,"").gsub(/\,\)/,")").gsub(/\(\,/,"(").gsub(/^\,/,"")
-    #debug "[eval_indri_query] result = #{result}"
+    result = query.gsub(PTN_OP,',op_\1').
+      gsub(PTN_WNODE , '[\1,node_ql(\'\2\',d.flm[:\3],c.flm[:\3])],').
+      gsub(PTN_NODE  , 'node_ql(\'\1\',d.flm[:\2],c.flm[:\2]),').
+      gsub(/\s/,"").gsub(/\,\)/,")").gsub(/\(\,/,"(").gsub(/^\,/,"")
+    puts "[eval_indri_query] result = #{result}"
     module_eval <<END
-          def score_doc(d)
+          def score_doc(d, c)
             #puts "[score_doc] evaluating " + d.did
             result = #{result}
             #puts "Match Found!" if @match_found
-            @match_found ? result : nil
+            @match_found ? result : MIN_NUM
           end
 END
+  end
+  
+  # @param [String] query
+  # @return [Array] parsed querywords
+  def self.parse_query(query)
+    query.strip.split(/\s+/).map{|e|e.downcase.stem}
   end
   
   def set_rule(rule)
@@ -32,13 +41,12 @@ END
     end
   end
   
-  def node_ql(qw, dlm ,o={})
-    qw = (@qw[qw] ||= qw.downcase.stem)
+  def node_ql(qw, dlm, clm ,o={})
     @match_found = true if dlm.f[qw]
     #debugger
     return 0 if dlm.size == 0
-    debug "[score_ql] #{qw} #{(dlm.f[qw]||0)}* #{(1-@lambda)} / #{dlm.size} + #{(@col.lm.f[qw]||0)} * #{@lambda} / #{@col.lm.size}" if @debug
-    cql = (@cql[qw] ||= ((@col.lm.f[qw]||0) * @lambda / @col.lm.size))
+    debug "[score_ql] #{qw} #{(dlm.f[qw]||0)}* #{(1-@lambda)} / #{dlm.size} + #{(clm.f[qw]||0)} * #{@lambda} / #{clm.size}" if @debug
+    cql = (clm.ql[qw] ||= ((clm.f[qw]||0) * @lambda / clm.size))
     (dlm.f[qw]||0) * (1.0-@lambda) / dlm.size + cql
   end
   

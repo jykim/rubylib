@@ -1,5 +1,7 @@
+load 'extensions/rails_extensions.rb'
 load 'extensions/table.rb'
 load 'extensions/statistics.rb'
+load 'extensions/vector.rb'
 load 'extensions/probability.rb'
 load 'extensions/entropy.rb'
 
@@ -41,9 +43,10 @@ end
 
 class String
   #include Stemmable
+
   #Detect Korean Language
   # alternative : comparing each_byte & each_char 
-  # just use 'mbchar?'
+  # just use mbchar?'
   def utf8?
     self =~ String::RE_UTF8
   end
@@ -90,6 +93,12 @@ class Array
     find_all{|e| !e.blank? }
   end
   
+  # Given array of numbers
+  # return the multiplication of all
+  def multiply
+    inject(1){|e,r|e*r}
+  end
+  
   #Iterate over both items
   def each_both(a)
     return false if size != a.size
@@ -111,10 +120,10 @@ end
 
 class Hash
   include ProbabilityOperator, ProbabilityTransformer
-  include Entropy
+  include Entropy, SparseVector
   
   def prob?()
-    assert_in_delta(1, values.sum, 0.0001)
+    #assert_in_delta(1, values.sum, 0.0001)
     size > 0
   end
   
