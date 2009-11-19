@@ -1,6 +1,7 @@
 require 'rubygems'
 require 'ruby-debug'
 require 'jcode'
+require 'matrix'
 $KCODE = "u"
 
 #require 'test/unit'

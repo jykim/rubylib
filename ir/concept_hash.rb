@@ -21,7 +21,7 @@ class ConceptHash
   # - match the longest word
   # @param <String> s : word seq. 
   # @return <Array> ret : array of found concept_ids
-  def find_concept( s )
+  def find_concepts( s )
     jump_count = 0 #prevent matched word from matching again
     ret = []
     return ret if s.blank?
@@ -43,8 +43,8 @@ class ConceptHash
             if block_given?
               yield h[w][:_key_] , words[i..j].join(' ')
             else
-              puts "Found: #{words[i..j].join(' ')}"
-              ret << h[w][:_key_]
+              #puts "Found: #{words[i..j].join(' ')}"
+              ret << [h[w][:_key_], words[i..j].join(' ')]
             end
             break
           else  #Move to Next Word
@@ -55,8 +55,8 @@ class ConceptHash
           if block_given?
             yield h[w] , words[i..j].join(' ')
           else
-            puts "Found: #{words[i..j].join(' ')}"
-            ret << h[w]
+            #puts "Found: #{words[i..j].join(' ')}"
+            ret << [h[w], words[i..j].join(' ')]
           end
           break
         else
@@ -66,12 +66,23 @@ class ConceptHash
     end#do
     ret
   end
+  
+  # Replace concept occurrence with explicit expression:
+  # {id:cid}
+  def replace_concepts(s)
+    concepts = find_concepts(s).uniq
+    #debugger
+    concepts.each do |e|
+      #puts "Replacing #{e}"
+      s.gsub!(/#{e[1]}/i, "{#{e[0]}:#{e[1].to_id}}")
+    end
+  end
     
   #Populate given concept in the ConceptTable
   # - Recursive Hash for storing multi-word concept efficiently
   #  - Hash(3rd Word) of Hash(2nd Word) of Hash(1st Word)
   #  - Integer is the final element
-  def put_concept( id , title )
+  def put_concepts( id , title )
     words = title.scan(LanguageModel::PTN_TERM).map{|w|w.downcase}
     if words.length > MAX_WORDS_IN_TERM then $lgr.error("Length exceeded!") end
     h = @ch #Current Position in Rec

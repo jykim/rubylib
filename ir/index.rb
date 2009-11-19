@@ -4,14 +4,17 @@ module IR
   # - contains document list and term statistics
   # - can be initialized from file or 
   class Index
-    attr_accessor :cid, :docs, :lm, :df, :flm
+    attr_accessor :cid, :docs, :dh
+    attr_accessor :lm, :df, :flm #collection statistics
 
     # @param [Array<IR::Document>] docs : documents 
     # @option o [Array] :fields accept the list of fields
     def initialize(docs = nil, o={})
       @cid = o[:cid]
       @docs = docs || []
+      @dh = docs.map_hash{|d|[d.dno, d]}
       @docs.each{|d|d.col = self}
+      
       @idf = {} # cache of IDF
       @lm = o[:lm]   || LanguageModel.create_by_merge(docs.map{|d|d.lm.f})
       @flm = {} ; @flm[:document] = @lm
@@ -21,7 +24,40 @@ module IR
         end
       end
       @df = LanguageModel.create_by_merge(docs.map{|d|d.lm.f.map{|k,v|[k,1]}}).f if o[:init_df]
-      info "Documents : #{docs.size}"
+      info "Collection #{@cid} loaded (#{docs.size} docs)"
+    end
+    
+    # Search based on similarity
+    # - Find target document
+    # - Evaluate similarity query
+    def find_similar(dno, o={})
+      query = dh[dno]
+      return nil unless query
+
+      weights = Vector.elements(o[:weights] || [1,1,1,1,1])
+      result = []
+      @docs.each do |d|
+        next if d.dno == query.dno
+        score = d.feature_vector(query).inner_product(weights)#w[:content] * d.tfidf_cosim(query) + w[:time] * d.tsim(query)
+        result << [d.dno, score]
+      end
+      result.sort_by{|e|e[1]}.reverse[0..50]
+    end
+    
+    # Log pairwise preference training data into file
+    # @param[String] query : query_id|clicked_item_id|skipped_item_id|...
+    def log_preference(dnos)
+      dnos = dnos.split("|").map{|e|e.to_i}
+      query = dh[dnos[0]]
+      return nil unless query
+
+      result = []
+      dnos[1..-1].each_with_index do |dno,i|
+        features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j,e].join(":")}
+        pref = (i == 0)? 2 : 1
+        result << [pref,"qid:#{query.dno}"].concat(features).concat(["# #{dno}"])
+      end
+      puts result.map{|e|e.join(" ")}.join("\n")
     end
 
     # Get collection score
@@ -61,5 +97,5 @@ module IR
       @docs << doc
       @lm.update(doc.lm.f)
     end
-  end  
+  end
 end

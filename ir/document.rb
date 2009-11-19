@@ -2,13 +2,14 @@ module IR
   # Document in IR::Indexed Form
   class Document
     TEXT_SIZE = 4096
-    attr_accessor :did, :text, :lm, :flm, :col
-
+    attr_accessor :dno, :did, :col
+    attr_accessor :text, :lm, :flm, :fts
     # 
-    def initialize(did, input, o = {})
-      @did = did
+    def initialize(dno, did, input, o = {})
+      @dno, @did = dno, did
       @fields = :document
       @col = o[:col]
+      @fts = o[:features]
       @flm = {}
       raise ArgumentError, "Field name :document not allowed!" if o[:fields] && o[:fields].include?(:document)
       case input.class.to_s
@@ -39,26 +40,39 @@ module IR
       @lm.tfidf(@col.df,@col.docs.size).cos_sim(doc.lm.tfidf(doc.col.df,doc.col.docs.size))
     end
     
+    def tsim(doc)
+      value_sec = @fts[:basetime] - doc.fts[:basetime]
+      value_n = 1 / Math.log((value_sec / 3600).abs+1)
+      (value_n > 1)? 1 : value_n
+    end
+    
+    def feature_vector(doc)
+      #debugger
+      result = [tfidf_cosim(doc), tsim(doc)]
+      result.concat CLTYPES.map{|t| $clf.read(t, @dno, doc.dno) || 0 } if @col.cid == 'concepts'
+      Vector.elements(result)
+    end
+    
     def to_trectext()
       template = ERB.new(IO.read("rubylib/ir/template/doc_trectext.xml.erb"))
       template.result(binding)
     end
     
     def to_yaml()
-      result = [did]
+      result = [dno, did]
       result << @flm.map_hash{|k,v|[k,v.f] if k != :document}
       result.to_yaml
     end
     
-    def self.create_from_yaml(yaml_str)
+    def self.create_from_yaml(yaml_str, o = {})
       #debugger
       begin
         yaml_obj = YAML.load(yaml_str)
       rescue Exception => e
         error "[create_from_yaml] error in #{yaml_str[0..100]}", e
         return nil
-      end      
-      Document.new(yaml_obj[0], yaml_obj[1].map_hash{|k,v|[k,LanguageModel.new(v)]})
+      end
+      Document.new(yaml_obj[0], yaml_obj[1], yaml_obj[2].map_hash{|k,v|[k,LanguageModel.new(v)]}, o)
     end
   end
 end

@@ -39,6 +39,14 @@ module Math
   def slog(numeric)
     (numeric > 0)? log(numeric) : (puts "[slog] arg = #{numeric}"; MIN_NUM)
   end
+  
+  def self.max(a, b)
+    a > b ? a : b
+  end
+
+  def self.min(a, b)
+    a < b ? a : b
+  end
 end
 
 class String
@@ -83,6 +91,14 @@ class Array
     result = []
     each_cons(n){|e|result << e }
     result
+  end
+  
+  #  combination of members
+  # [a,b,c] => [[a,b],[a,c],[b,c]]
+  def to_comb
+    a = []
+    map_with_index{|e1,i| map_with_index{|e2,j| a << [e1,e2] if i < j}}
+    a
   end
 
   #def to_s
