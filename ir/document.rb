@@ -61,7 +61,12 @@ module IR
     def to_yaml()
       result = [dno, did]
       result << @flm.map_hash{|k,v|[k,v.f] if k != :document}
-      result.to_yaml
+      begin
+        result.to_yaml        
+      rescue Exception => e
+        error "[Document::to_yaml] Unhandled Exceptions ", e
+        nil
+      end
     end
     
     def self.create_from_yaml(yaml_str, o = {})
@@ -69,10 +74,11 @@ module IR
       begin
         yaml_obj = YAML.load(yaml_str)
       rescue Exception => e
-        error "[create_from_yaml] error in #{yaml_str[0..100]}", e
+        error "[create_from_yaml] error", e
         return nil
       end
-      Document.new(yaml_obj[0], yaml_obj[1], yaml_obj[2].map_hash{|k,v|[k,LanguageModel.new(v)]}, o)
+      index_content = yaml_obj[2].map_hash{|k,v|[k,LanguageModel.new(v)]} if yaml_obj[2] && yaml_obj[2].class == Hash
+      Document.new(yaml_obj[0], yaml_obj[1], index_content, o)
     end
   end
 end

@@ -3,7 +3,7 @@
 # - 
 class ConceptHash
   MAX_WORDS_IN_TERM = 10
-  attr_reader :ct
+  attr_reader :ch
   
   def initialize
     clear
@@ -14,7 +14,8 @@ class ConceptHash
   end
   
   def clear
-    @ch = {}
+    @ch = {} # Concept Hash
+    @ct = {} # Concept ID -> Title
   end
     
   # Find Concept(s) from Given Word Sequence
@@ -73,8 +74,9 @@ class ConceptHash
     concepts = find_concepts(s).uniq
     #debugger
     concepts.each do |e|
-      #puts "Replacing #{e}"
-      s.gsub!(/#{e[1]}/i, "{#{e[0]}:#{e[1].to_id}}")
+      title = @ct[e[0]]
+      puts "Replacing #{title}"
+      s.gsub!(/#{title}/i, "#{e[0]}_#{title.to_id}")
     end
   end
     
@@ -83,6 +85,7 @@ class ConceptHash
   #  - Hash(3rd Word) of Hash(2nd Word) of Hash(1st Word)
   #  - Integer is the final element
   def put_concepts( id , title )
+    @ct[id] = title
     words = title.scan(LanguageModel::PTN_TERM).map{|w|w.downcase}
     if words.length > MAX_WORDS_IN_TERM then $lgr.error("Length exceeded!") end
     h = @ch #Current Position in Rec

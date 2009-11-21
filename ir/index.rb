@@ -16,7 +16,7 @@ module IR
       @docs.each{|d|d.col = self}
       
       @idf = {} # cache of IDF
-      @lm = o[:lm]   || LanguageModel.create_by_merge(docs.map{|d|d.lm.f})
+      @lm = o[:lm]   || LanguageModel.create_by_merge(docs.map{|d|(d.lm)? d.lm.f : {}})
       @flm = {} ; @flm[:document] = @lm
       if o[:fields]
         o[:fields].each do |field|
