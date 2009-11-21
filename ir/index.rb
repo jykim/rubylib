@@ -53,11 +53,11 @@ module IR
 
       result = []
       dnos[1..-1].each_with_index do |dno,i|
-        features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j,e].join(":")}
+        features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
         pref = (i == 0)? 2 : 1
-        result << [pref,"qid:#{query.dno}"].concat(features).concat(["# #{dno}"])
+        result << [pref,"qid:#{$basedate}_#{query.dno}"].concat(features).concat(["# #{dno}"])
       end
-      puts result.map{|e|e.join(" ")}.join("\n")
+      $f_li.puts result.map{|e|e.join(" ")}.join("\n")
     end
 
     # Get collection score
