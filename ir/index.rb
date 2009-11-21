@@ -34,10 +34,11 @@ module IR
       query = dh[dno]
       return nil unless query
 
-      weights = Vector.elements(o[:weights] || [1,1,1,1,1])
+      weights = Vector.elements(o[:weights] || [1]*$feature_counts)
       result = []
       @docs.each do |d|
         next if d.dno == query.dno
+        #puts "#{d.feature_vector(query).inspect}*#{weights.inspect}"
         score = d.feature_vector(query).inner_product(weights)#w[:content] * d.tfidf_cosim(query) + w[:time] * d.tsim(query)
         result << [d.dno, score]
       end
@@ -52,12 +53,15 @@ module IR
       return nil unless query
 
       result = []
+      $last_query_no += 1
       dnos[1..-1].each_with_index do |dno,i|
         features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
         pref = (i == 0)? 2 : 1
-        result << [pref,"qid:#{$basedate}_#{query.dno}"].concat(features).concat(["# #{dno}"])
+        result << [pref,"qid:#{$last_query_no}"].concat(features).concat(["# #{query.dno} -> #{dno}"])
       end
+      SysConfig.find_by_title("LAST_QUERY_NO").update_attributes(:content=>$last_query_no) 
       $f_li.puts result.map{|e|e.join(" ")}.join("\n")
+      $f_li.flush
     end
 
     # Get collection score
