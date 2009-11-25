@@ -17,6 +17,7 @@ class LanguageModel
     else
       {}#raise ArgumentError
     end
+    #puts @f.inspect
     @size = @f.values.sum
   end
   
