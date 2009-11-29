@@ -46,10 +46,14 @@ module IR
       (value_n > 1)? 1 : value_n
     end
     
+    def normalize(value)
+      Math.log(value+1)
+    end
+    
     def feature_vector(doc)
       #debugger
       result = [tfidf_cosim(doc), tsim(doc)]
-      result.concat CLTYPES.map{|t| $clf.read(t, @dno, doc.dno) || 0 } if @col.cid == 'concepts'
+      result.concat CLTYPES.map{|t| normalize($clf.read(t, @dno, doc.dno).to_i) || 0 } if @col.cid == 'concepts'
       Vector.elements(result)
     end
     
