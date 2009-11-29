@@ -11,6 +11,7 @@ module IR
       @col = o[:col]
       @fts = o[:features]
       @flm = {}
+      @cosim = {} ; @tsim = {}
       raise ArgumentError, "Field name :document not allowed!" if o[:fields] && o[:fields].include?(:document)
       case input.class.to_s
       when 'String'
@@ -36,14 +37,24 @@ module IR
       @flm[:document] = @lm
     end
     
-    def tfidf_cosim(doc)
-      @lm.tfidf(@col.df,@col.docs.size).cos_sim(doc.lm.tfidf(doc.col.df,doc.col.docs.size))
+    def cosim(doc)
+      @cosim[doc.id] ||= tfidf.product(doc.tfidf).sum{|k,v|v} / (tfidf_size * doc.tfidf_size)
+      #tfidf.cosim(doc.tfidf)
+    end
+    
+    def tfidf
+      @tfidf ||= @lm.tfidf(@col.df,@col.docs.size)
+    end
+    
+    def tfidf_size
+      @tfidf_size ||= tfidf.normalize
     end
     
     def tsim(doc)
+      return @tsim[doc.id] if @tsim[doc.id]
       value_sec = @fts[:basetime] - doc.fts[:basetime]
       value_n = 1 / Math.log((value_sec / 3600).abs+1)
-      (value_n > 1)? 1 : value_n
+      @tsim[doc.id] = (value_n > 1)? 1 : value_n
     end
     
     def normalize(value)
@@ -52,7 +63,7 @@ module IR
     
     def feature_vector(doc)
       #debugger
-      result = [tfidf_cosim(doc), tsim(doc)]
+      result = [cosim(doc), tsim(doc)]
       result.concat CLTYPES.map{|t| normalize($clf.read(t, @dno, doc.dno).to_i) || 0 } if @col.cid == 'concepts'
       Vector.elements(result)
     end

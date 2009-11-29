@@ -40,7 +40,7 @@ module IR
         next if d.dno == query.dno
         puts "[find_similar] Scoring #{d.id}"
         #puts "#{d.feature_vector(query).inspect}*#{weights.inspect}"
-        score = d.feature_vector(query).inner_product(weights)#w[:content] * d.tfidf_cosim(query) + w[:time] * d.tsim(query)
+        score = d.feature_vector(query).inner_product(weights)#w[:content] * d.cosim(query) + w[:time] * d.tsim(query)
         result << [d.dno, score] if !score.nan?
       end
       #debugger

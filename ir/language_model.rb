@@ -23,7 +23,7 @@ class LanguageModel
   
   # @param [Hash<String,Float>] df : hash of df values
   def tfidf(df, doc_no)
-    @tfidf ||= @f.map_hash{|k,v|[k, v * Math.log(doc_no.to_f/df[k])]}
+    @f.map_hash{|k,v|[k, v * Math.log(doc_no.to_f/df[k])]}
   end
   
   def size()

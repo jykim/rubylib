@@ -13,7 +13,7 @@ module SparseVector
     #self.merge(other){|k,v1,v2|v1*v2}
   end
   
-  def cos_sim(other)
+  def cosim(other)
     #debugger
     self.product(other).sum{|k,v|v} / (self.normalize * other.normalize)
   end
