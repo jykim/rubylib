@@ -84,6 +84,15 @@ module Statistics
     collect{|e| e.to_f / r}
   end
   
+  def sample(times = 1)
+    result = []
+    #puts rand(),(rand()*size).to_i
+    1.upto(times){|i|result << rand}
+    result
+  end
+  
+  # Normalize value into probability
+  # self : [[k1,v1],...], [v1,v2,...]
   def to_p()
     if self[0].class == Array
       v_sum = map{|e|e[1]}.sum

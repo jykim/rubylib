@@ -37,6 +37,18 @@ module IR
       @flm[:document] = @lm
     end
     
+    def lm(fields = nil)
+      (!fields)? @lm : LanguageModel.create_by_merge(@flm.find_all{|k,v|fields.include?(k)}.map{|e|e[1].f})
+    end
+    
+    def to_s
+      "#{dno} #{did}"
+    end
+    
+    def blank?
+      @lm.f.blank?
+    end
+    
     def cosim(doc)
       @cosim[doc.id] ||= tfidf.product(doc.tfidf).sum{|k,v|v} / (tfidf_size * doc.tfidf_size)
       #tfidf.cosim(doc.tfidf)
