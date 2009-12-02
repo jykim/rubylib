@@ -2,6 +2,7 @@ module IR
   # Document in IR::Indexed Form
   class Document
     TEXT_SIZE = 4096
+    MAX_FEATURE_VALUE = 2.39789527279837 #Math.log(10+1)
     attr_accessor :dno, :did, :col
     attr_accessor :text, :lm, :flm, :fts
     # 
@@ -69,14 +70,19 @@ module IR
       @tsim[doc.id] = (value_n > 1)? 1 : value_n
     end
     
-    def normalize(value)
-      Math.log(value+1)
+    def normalize(type, value)
+      case type
+      when /t/
+        value
+      else
+        new_value = Math.log(value+1) / MAX_FEATURE_VALUE
+        (new_value > 1)? 1 : new_value
+      end
     end
     
     def feature_vector(doc)
-      #debugger
       result = [cosim(doc), tsim(doc)]
-      result.concat CLTYPES.map{|t| normalize($clf.read(t, @dno, doc.dno).to_i) || 0 } if @col.cid == 'concepts'
+      result.concat CLTYPES.map{|t| normalize(t, $clf.read(t, @dno, doc.dno)) } #if @col.cid == 'concepts'
       Vector.elements(result)
     end
     

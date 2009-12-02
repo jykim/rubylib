@@ -49,20 +49,25 @@ module IR
     
     # Log pairwise preference training data into file
     # @param[String] query : query_id|clicked_item_id|skipped_item_id|...
-    def log_preference(dnos)
+    def log_preference(dnos, o={})
       dnos = dnos.split("|").map{|e|e.to_i}
+      puts "[log_preference] dnos=#{dnos.inspect}"
       query = dh[dnos[0]]
       return nil unless query
 
       result = []
       $last_query_no += 1
       dnos[1..-1].each_with_index do |dno,i|
+        next if i > 0 && $clf.read('c', dno, query.dno) > 0
         features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
         pref = (i == 0)? 2 : 1
         result << [pref,"qid:#{$last_query_no}"].concat(features).concat(["# #{query.dno} -> #{dno}"])
       end
-      SysConfig.find_by_title("LAST_QUERY_NO").update_attributes(:content=>$last_query_no) 
-      $f_li.puts result.map{|e|e.join(" ")}.join("\n")
+      if !o[:export_mode]
+        $clf.increment('c', dnos[0], dnos[1])
+        SysConfig.find_by_title("LAST_QUERY_NO").update_attributes(:content=>$last_query_no) 
+      end
+      $f_li.puts result.map{|e|e.join(" ")}.join("\n") if result.size > 1
       $f_li.flush
     end
 
