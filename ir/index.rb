@@ -34,7 +34,7 @@ module IR
       query = dh[dno]
       return nil unless query
 
-      weights = Vector.elements(o[:weights] || [1]*$feature_counts)
+      weights = Vector.elements(o[:weights] || [1]*Searcher::FEATURE_COUNT)
       result = []
       @docs.each do |d|
         next if d.dno == query.dno
@@ -51,7 +51,7 @@ module IR
     # @param[String] query : query_id|clicked_item_id|skipped_item_id|...
     def log_preference(dnos, o={})
       dnos = dnos.split("|").map{|e|e.to_i}
-      puts "[log_preference] dnos=#{dnos.inspect}"
+      #puts "[log_preference] dnos=#{dnos.inspect}"
       query = dh[dnos[0]]
       return nil unless query
 

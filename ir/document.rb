@@ -3,6 +3,7 @@ module IR
   class Document
     TEXT_SIZE = 4096
     MAX_FEATURE_VALUE = 2.39789527279837 #Math.log(10+1)
+    
     attr_accessor :dno, :did, :col
     attr_accessor :text, :lm, :flm, :fts
     # 
@@ -82,7 +83,7 @@ module IR
     
     def feature_vector(doc)
       result = [cosim(doc), tsim(doc)]
-      result.concat CLTYPES.map{|t| normalize(t, $clf.read(t, @dno, doc.dno)) } #if @col.cid == 'concepts'
+      result.concat ['o','t',].map{|t| normalize(t, $clf.read(t, @dno, doc.dno)) } #if @col.cid == 'concepts'
       Vector.elements(result)
     end
     
