@@ -75,7 +75,7 @@ class ConceptHash
     #debugger
     concepts.each do |e|
       title = @ct[e[0]]
-      puts "Replacing #{title}"
+      #puts "Replacing #{title}"
       s.gsub!(/#{title}/i, "#{e[0]}_#{title.to_id}")
     end
   end
