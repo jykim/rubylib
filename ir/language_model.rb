@@ -5,14 +5,18 @@ class LanguageModel
   PTN_TERM = /[A-Za-z0-9]+/
   def initialize(input, o = {})
     #return if !text
-    #debugger
+    #puts "#{input.inspect}"
     @ql = {} # cache of query likelihood
     @f = case input.class.to_s
     when "Hash" # fdist
       input
     when "String"
       #@text = input
-      input.clear_tags.scan(PTN_TERM).map{|e|e.downcase.stem}.find_all{|e|!$stopwords.has_key?(e)}.to_dist
+      if input.blank?
+        {}
+      else
+        input.clear_tags.scan(PTN_TERM).map{|e|e.downcase.stem}.find_all{|e|!$stopwords.has_key?(e)}.to_dist
+      end
       #input.clear_tags.scan(PTN_TERM).map{|e|e.downcase.stem}.to_dist
     else
       {}#raise ArgumentError

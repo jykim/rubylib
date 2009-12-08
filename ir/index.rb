@@ -5,7 +5,7 @@ module IR
   # - can be initialized from file or 
   class Index
     attr_accessor :cid, :docs, :dh
-    attr_accessor :lm, :df, :flm #collection statistics
+    attr_accessor :lm, :df, :fdf, :flm #collection statistics
 
     # @param [Array<IR::Document>] docs : documents 
     # @option o [Array] :fields accept the list of fields
@@ -15,15 +15,20 @@ module IR
       @dh = docs.map_hash{|d|[d.dno, d]}
       @docs.each{|d|d.col = self}
       
-      @idf = {} # cache of IDF
+      #@idf = {} # cache of IDF
       @lm = o[:lm]   || LanguageModel.create_by_merge(docs.map{|d|(d.lm)? d.lm.f : {}})
-      @flm = {} ; @flm[:document] = @lm
+      @df = LanguageModel.create_by_merge(docs.map{|d|d.lm.f.map{|k,v|[k,1]}}).f if o[:init_df]
       if o[:fields]
+        @flm = {} ; @flm[:document] = @lm
+        @fdf = {} ; @flm[:document] = @df if o[:init_df]
         o[:fields].each do |field|
-          @flm[field] = LanguageModel.create_by_merge(docs.map{|d|d.flm[field].f})
+          @flm[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f : {}})
+          @fdf[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f.map{|k,v|[k,1]} : {}}).f
+          #@flm[field] = LanguageModel.create_by_merge(docs.map{|d|d.flm[field].f})
+          #@fdf[field] = LanguageModel.create_by_merge(docs.map{|d|d.flm[field].f.map{|k,v|[k,1]}}).f
         end
       end
-      @df = LanguageModel.create_by_merge(docs.map{|d|d.lm.f.map{|k,v|[k,1]}}).f if o[:init_df]
+      #puts @fdf.inspect
       info "Collection #{@cid} loaded (#{docs.size} docs)"
     end
     
@@ -34,17 +39,25 @@ module IR
       query = dh[dno]
       return nil unless query
 
-      weights = Vector.elements(o[:weights] || [1]*Searcher::FEATURE_COUNT)
+      weights = Vector.elements(o[:weights] || [1]*Searcher::FEATURES.size)
       result = []
       @docs.each do |d|
         next if d.dno == query.dno
         #puts "[find_similar] Scoring #{d.id}"
         #puts "#{d.feature_vector(query).inspect}*#{weights.inspect}"
-        score = d.feature_vector(query).inner_product(weights)#w[:content] * d.cosim(query) + w[:time] * d.tsim(query)
-        result << [d.dno, score] if !score.nan?
+        begin
+          score = d.feature_vector(query).inner_product(weights)#w[:content] * d.cosim(query) + w[:time] * d.tsim(query)          
+        rescue Exception => e
+          puts "Error in #{d.feature_vector(query).inspect}*#{weights.inspect}"
+        end        
+        result << [d.dno, score]
       end
       #debugger
-      result.sort_by{|e|e[1]}.reverse[0..50]
+      if ENV['rank'] == 'random'
+        result.sample(50)
+      else
+        result.sort_by{|e|e[1]}.reverse[0..50]
+      end
     end
     
     # Log pairwise preference training data into file
@@ -58,7 +71,7 @@ module IR
       result = []
       $last_query_no += 1
       dnos[1..-1].each_with_index do |dno,i|
-        next if i > 0 && $clf.read('c', dno, query.dno) > 0
+        next if (i > 0 && $clf.read('c', dno, query.dno) > 0)
         features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
         pref = (i == 0)? 2 : 1
         result << [pref,"qid:#{$last_query_no}"].concat(features).concat(["# #{query.dno} -> #{dno}"])

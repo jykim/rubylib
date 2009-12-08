@@ -138,6 +138,10 @@ class Hash
   include ProbabilityOperator, ProbabilityTransformer
   include Entropy, SparseVector
   
+  def max_pair
+    max{|e1,e2|e1[1]<=>e2[1]}
+  end
+  
   def prob?()
     #assert_in_delta(1, values.sum, 0.0001)
     size > 0

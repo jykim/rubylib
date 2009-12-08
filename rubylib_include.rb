@@ -15,5 +15,6 @@ require 'ir/stopwords.rb'
 require 'ir/index.rb'
 require 'ir/document.rb'
 require 'ir/concept_hash.rb'
+require 'ir/params_search.rb'
 
 #include Test::Unit::Assertions

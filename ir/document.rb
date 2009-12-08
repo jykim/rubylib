@@ -2,7 +2,8 @@ module IR
   # Document in IR::Indexed Form
   class Document
     TEXT_SIZE = 4096
-    MAX_FEATURE_VALUE = 2.39789527279837 #Math.log(10+1)
+    MAX_FEATURE_VALUE = Math.log(10+1)
+    MAX_FEATURE_VALUE2 = Math.log(100+1)
     
     attr_accessor :dno, :did, :col
     attr_accessor :text, :lm, :flm, :fts
@@ -13,8 +14,10 @@ module IR
       @col = o[:col]
       @fts = o[:features]
       @flm = {}
+      
       @cosim = {} ; @tsim = {}
-      raise ArgumentError, "Field name :document not allowed!" if o[:fields] && o[:fields].include?(:document)
+      @tfidf = {} ; @tfidf_size = {}
+      raise ArgumentError, "Field :document not allowed!" if o[:fields] && o[:fields].include?(:document)
       case input.class.to_s
       when 'String'
         #@text = input[0..TEXT_SIZE]
@@ -32,14 +35,13 @@ module IR
         end
       when 'Hash' #{field1=>flm1,field2=>flm2,...}
         @flm = input
-        #debugger
-        @lm = LanguageModel.create_by_merge(input.map{|k,v|v.f})
+        @lm = LanguageModel.create_by_merge(@flm.map{|k,v|v.f})
         raise DataError unless @flm.map{|k,v|v.size}.sum == @lm.size
       end
       @flm[:document] = @lm
     end
     
-    def lm(fields = nil)
+    def get_flm(fields = nil)
       (!fields)? @lm : LanguageModel.create_by_merge(@flm.find_all{|k,v|fields.include?(k)}.map{|e|e[1].f})
     end
     
@@ -51,17 +53,21 @@ module IR
       @lm.f.blank?
     end
     
-    def cosim(doc)
-      @cosim[doc.id] ||= tfidf.product(doc.tfidf).sum{|k,v|v} / (tfidf_size * doc.tfidf_size)
+    def cosim(doc, field = :document)
+      @cosim[doc.id] = {} if !@cosim[doc.id]
+      return @cosim[doc.id][field] if @cosim[doc.id][field]
+      result = tfidf(field).product(doc.tfidf(field)).sum{|k,v|v} / 
+               (tfidf_size(field) * doc.tfidf_size(field))
+      @cosim[doc.id][field] =  (result.nan?)? 0 : result
       #tfidf.cosim(doc.tfidf)
     end
     
-    def tfidf
-      @tfidf ||= @lm.tfidf(@col.df,@col.docs.size)
+    def tfidf(field = :document)
+      @tfidf[field] ||= @flm[field].tfidf(@col.df,@col.docs.size)
     end
     
-    def tfidf_size
-      @tfidf_size ||= tfidf.normalize
+    def tfidf_size(field = :document)
+      @tfidf_size[field] ||= tfidf(field).normalize
     end
     
     def tsim(doc)
@@ -71,19 +77,16 @@ module IR
       @tsim[doc.id] = (value_n > 1)? 1 : value_n
     end
     
-    def normalize(type, value)
-      case type
-      when /t/
-        value
-      else
-        new_value = Math.log(value+1) / MAX_FEATURE_VALUE
-        (new_value > 1)? 1 : new_value
-      end
+    def normalize(value, threshold = MAX_FEATURE_VALUE)
+      new_value = Math.log(value+1) / threshold
+      (new_value > 1)? 1 : new_value
     end
     
     def feature_vector(doc)
-      result = [cosim(doc), tsim(doc)]
-      result.concat ['o','t',].map{|t| normalize(t, $clf.read(t, @dno, doc.dno)) } #if @col.cid == 'concepts'
+      result = [cosim(doc,:title), cosim(doc,:content), cosim(doc,:uri), cosim(doc,:tag), tsim(doc)]
+      result << normalize($clf.read('o', @dno, doc.dno))
+      result << $clf.read('t', @dno, doc.dno)
+      result << normalize($clf.read_sum('o', @dno), MAX_FEATURE_VALUE2)
       Vector.elements(result)
     end
     
@@ -95,6 +98,7 @@ module IR
     def to_yaml()
       result = [dno, did]
       result << @flm.map_hash{|k,v|[k,v.f] if k != :document}
+      #result << @fts
       begin
         result.to_yaml        
       rescue Exception => e
@@ -111,6 +115,7 @@ module IR
         error "[create_from_yaml] error", e
         return nil
       end
+      #features = yaml_obj[3] if yaml_obj[3] && yaml_obj[3].class == Hash
       index_content = yaml_obj[2].map_hash{|k,v|[k,LanguageModel.new(v)]} if yaml_obj[2] && yaml_obj[2].class == Hash
       Document.new(yaml_obj[0], yaml_obj[1], index_content, o)
     end
