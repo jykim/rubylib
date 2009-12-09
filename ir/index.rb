@@ -71,9 +71,18 @@ module IR
       result = []
       $last_query_no += 1
       dnos[1..-1].each_with_index do |dno,i|
-        next if (i > 0 && $clf.read('c', dno, query.dno) > 0)
-        features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
         pref = (i == 0)? 2 : 1
+        begin
+          raise ArgumentError, "already clicked concept!" if pref == 1 && $clf.read('c', dno, query.dno) > 0
+          features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
+        rescue Exception => e
+          error "[log_preference] error in #{$last_query_no}th query : #{dno}"
+          if pref == 2 #clicked concept missing!
+            return
+          else
+            next
+          end
+        end        
         result << [pref,"qid:#{$last_query_no}"].concat(features).concat(["# #{query.dno} -> #{dno}"])
       end
       if !o[:export_mode]
