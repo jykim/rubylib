@@ -83,7 +83,7 @@ module IR
             next
           end
         end        
-        result << [pref,"qid:#{$last_query_no}"].concat(features).concat(["# #{query.dno} -> #{dno}"])
+        result << [pref,"qid:#{$last_query_no}"].concat(features).concat(["# #{query.dno} -> #{dno} (#{query.did} / #{dh[dno].did})"])
       end
       if !o[:export_mode]
         $clf.increment('c', dnos[0], dnos[1])
