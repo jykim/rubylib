@@ -91,6 +91,14 @@ module Statistics
     result
   end
   
+  def shuffle
+    sort_by { rand }
+  end
+
+  def shuffle!
+    self.replace shuffle
+  end
+  
   # Normalize value into probability
   # self : [[k1,v1],...], [v1,v2,...]
   def to_p()
