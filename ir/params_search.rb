@@ -51,6 +51,7 @@ class GoldenSectionSearchMethod < SearchMethod
   def initialize(xvals , yvals , o = {})
     super(xvals, yvals, o)
     @cvg_range = o[:cvg_range] || 0.1
+    @saved_results = {}
   end
   
   #Determine Appropriate Next Point
@@ -86,7 +87,11 @@ class GoldenSectionSearchMethod < SearchMethod
                   end
 
           @yvals[i][j] = cur_y
-          results[i][j][cur_y] = yield @xvals , @yvals[i]
+          results[i][j][cur_y] = if @saved_results[@yvals[i].join("_")]
+            @saved_results[@yvals[i].join("_")] 
+          else
+            @saved_results[@yvals[i].join("_")] = yield @xvals , @yvals[i]
+          end
           cur_result = "[#{i}][#{j}] lambda[#{cur_y.round_at(3)}] = #{results[i][j][cur_y]}"
           $lgr.info "#{i} #{j} #{cur_y.round_at(5)} #{results[i][j][cur_y]}"
 

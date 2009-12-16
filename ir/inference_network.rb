@@ -12,6 +12,7 @@ module InferenceNetwork
     puts "[eval_indri_query] result = #{result}"
     module_eval <<END
           def score_doc(d, c)
+            #debugger
             #puts "[score_doc] evaluating " + d.did
             result = #{result}
             #puts "Match Found!" if @match_found

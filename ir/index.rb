@@ -18,9 +18,9 @@ module IR
       #@idf = {} # cache of IDF
       @lm = o[:lm]   || LanguageModel.create_by_merge(docs.map{|d|(d.lm)? d.lm.f : {}})
       @df = LanguageModel.create_by_merge(docs.map{|d|d.lm.f.map{|k,v|[k,1]}}).f if o[:init_df]
+      @flm = {} ; @flm[:document] = @lm
+      @fdf = {} ; @flm[:document] = @df if o[:init_df]
       if o[:fields]
-        @flm = {} ; @flm[:document] = @lm
-        @fdf = {} ; @flm[:document] = @df if o[:init_df]
         o[:fields].each do |field|
           @flm[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f : {}})
           @fdf[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f.map{|k,v|[k,1]} : {}}).f
