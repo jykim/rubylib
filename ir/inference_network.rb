@@ -55,12 +55,12 @@ END
   def op_wsum(*args)
     debug "#wsum(#{args.map{|e|e.join('*')}.join(' ')})" if @debug
     sum_weights = args.map{|e|e[0]}.sum
-    args.map{|e|e[0] * e[1] / sum_weights}.sum
+    args.find_all{|e|e>0}.map{|e|e[0] * e[1] / sum_weights}.sum
   end
   
   # args = [score1, score2, ...]
   def op_combine(*args)
     debug "#combine(#{args.join(" ")})" if @debug
-    args.map{|e|log(e)}.sum / args.size
+    args.find_all{|e|e>0}.map{|e|log(e)}.sum / args.size
   end
 end
