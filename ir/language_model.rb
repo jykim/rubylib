@@ -25,6 +25,21 @@ class LanguageModel
     @size = @f.values.sum
   end
   
+  def prob(word)
+    return 0 if @size == 0
+    @f[word].to_f / @size
+  end
+  
+  def p
+    @p ||= @f.map_hash{|k,v|[k,v.to_f / @size]}
+  end
+  
+  def kld(lm)
+    lm_p = lm.p
+    self.p.map{|k,v|v * (Math.log(v) - Math.log(lm_p[k]||Math::MIN_NUM))}.sum
+  end
+  
+  # Calculate tf*idf vector of current LM
   # @param [Hash<String,Float>] df : hash of df values
   def tfidf(df, doc_no)
     @f.map_hash{|k,v|[k, v * Math.log(doc_no.to_f/df[k])]}

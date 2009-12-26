@@ -9,7 +9,7 @@ module InferenceNetwork
       gsub(PTN_WNODE , '[\1,node_ql(\'\2\',d.flm[:\3],c.flm[:\3])],').
       gsub(PTN_NODE  , 'node_ql(\'\1\',d.flm[:\2],c.flm[:\2]),').
       gsub(/\s/,"").gsub(/\,\)/,")").gsub(/\(\,/,"(").gsub(/^\,/,"")
-    puts "[eval_indri_query] result = #{result}"
+    #puts "[eval_indri_query] result = #{result}"
     module_eval <<END
           def score_doc(d, c)
             #debugger
@@ -24,7 +24,7 @@ END
   # @param [String] query
   # @return [Array] parsed querywords
   def self.parse_query(query)
-    query.strip.split(/\s+/).map{|e|e.downcase.stem}
+    query.strip.scan(LanguageModel::PTN_TERM).map{|e|e.downcase.stem}
   end
   
   def set_rule(rule)
