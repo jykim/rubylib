@@ -25,8 +25,15 @@ class LanguageModel
     @size = @f.values.sum
   end
   
+  # Background probability for smoothing
+  # - reciprocal of the vocabulary size
+  def bg_prob
+    @bg_prob ||= 1.0 / @size
+  end
+  
   def prob(word)
     return 0 if @size == 0
+    return bg_prob if !@f[word]
     @f[word].to_f / @size
   end
   

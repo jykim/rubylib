@@ -25,6 +25,7 @@ class Time
 end
 
 module Math
+  MIN_PROB = 0.0000001
   MIN_NUM = -99999
   def log2(numeric)
     #raise ArgumentError if !numeric
@@ -61,6 +62,10 @@ class String
   
   def clear_tags()
     gsub(/\<\/?\w+?\>/, "")
+  end
+  
+  def round(at = 5)
+    gsub(/\.[0-9]{#{at},}/){|match|match[0..at]}
   end
   
   def find_tag(tag_name)

@@ -7,7 +7,6 @@ module IR
     #include CollectionScoreHelper
     attr_accessor :cid, :docs, :dhno, :dhid
     attr_accessor :lm, :df, :fdf, :flm #collection statistics
-    CS_TYPES = [:cql, :mpmax, :mpmean, :clarity, :qlm]
 
     # @param [Array<IR::Document>] docs : documents 
     # @option o [Array] :fields accept the list of fields
@@ -94,34 +93,6 @@ module IR
       end
       $f_li.puts result.map{|e|e.join(" ")}.join("\n") if result.size > 1
       $f_li.flush
-    end
-    
-    # Get collection score
-    # @param [String] query
-    def col_score(query, type, o = {})
-      parsed_query = InferenceNetwork.parse_query(query)
-      #debug "[col_score] parsed_query = #{parsed_query}"
-      #debugger
-      begin
-        result = case type
-        when :cql
-          parsed_query.map{|e|@lm.prob(e)}.multiply
-        when :mpmax
-          parsed_query.map{|e|@flm.map{|k,v|v.prob(e)}.max}.multiply
-        when :mpmean
-          parsed_query.map{|e|@flm.map{|k,v|v.prob(e)}.mean}.multiply
-        when :clarity
-          rank_list = $searcher.search(query, :col=>@cid)
-          #debugger
-          @dhid[rank_list[0][0]].lm.kld(@lm)
-        when :qlm
-          parsed_query.map{|e|o[:qlm].prob(e)||0.00001}.multiply
-        end
-      rescue Exception => e
-        warn("[Index#col_score] result = 0 (exception)")      
-      end
-      #debug("[Index#col_score] query = #{parsed_query.join(' ')} type = #{type} / result = #{result}")
-      result
     end
 
     # Used by Indexer

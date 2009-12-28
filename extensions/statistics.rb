@@ -47,6 +47,18 @@ module Statistics
     end
   end
   
+  def hmean()
+    sum = 0
+    each{|v|sum += (1.0/v)}
+    size / sum
+  end
+  
+  def gmean()
+    prod = 1.0
+    each{|v|prod *= v}
+    prod ** (1.0/size)
+  end
+  
   alias avg mean
 
   def median
