@@ -120,6 +120,12 @@ class Array
     inject(1){|e,r|e*r}
   end
   
+  # Given array of numbers
+  # return the multiplication of log
+  def multiply_log
+    inject(0){|e,r|e+Math.log(r)}
+  end
+  
   #Iterate over both items
   def each_both(a)
     return false if size != a.size
