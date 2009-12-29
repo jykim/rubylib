@@ -38,7 +38,7 @@ END
     @rule_name, @rule_value = rule_name, rule_value.to_f
     @lambda = case @rule_name
     when 'jm' : @rule_value
-    #when 'dirichlet' : @rule_value / (@rule_value + dlm.size)
+    when 'dirichlet' : @rule_value / (@rule_value + dlm.size)
     end
   end
   
