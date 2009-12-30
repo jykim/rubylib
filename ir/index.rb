@@ -25,7 +25,7 @@ module IR
       if o[:fields]
         o[:fields].each do |field|
           @flm[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f : {}})
-          @fdf[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f.map{|k,v|[k,1]} : {}}).f
+          @fdf[field] = LanguageModel.create_by_merge(docs.map{|d|(d.flm[field])? d.flm[field].f.map{|k,v|[k,1]} : {}}).f if o[:init_df]
           #@flm[field] = LanguageModel.create_by_merge(docs.map{|d|d.flm[field].f})
           #@fdf[field] = LanguageModel.create_by_merge(docs.map{|d|d.flm[field].f.map{|k,v|[k,1]}}).f
         end
