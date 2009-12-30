@@ -38,7 +38,7 @@ module IR
     # - Find target document
     # - Evaluate similarity query
     def find_similar(dno, o={})
-      query = dh[dno]
+      query = @dhno[dno]
       return nil unless query
 
       weights = Vector.elements(o[:weights] || [1]*Searcher::FEATURES.size)
@@ -67,7 +67,7 @@ module IR
     def log_preference(dnos, o={})
       dnos = dnos.split("|").map{|e|e.to_i}
       #puts "[log_preference] dnos=#{dnos.inspect}"
-      query = dh[dnos[0]]
+      query = @dhno[dnos[0]]
       return nil unless query
 
       result = []
@@ -76,7 +76,7 @@ module IR
         pref = (i == 0)? 2 : 1
         begin
           raise ArgumentError, "already clicked concept!" if pref == 1 && $clf.read('c', dno, query.dno) > 0
-          features = dh[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
+          features = @dhno[dno].feature_vector(query).to_a.map_with_index{|e,j|[j+1,fp(e)].join(":")}
         rescue Exception => e
           error "[log_preference] error in #{$last_query_no}th query : #{dno}"
           if pref == 2 #clicked concept missing!

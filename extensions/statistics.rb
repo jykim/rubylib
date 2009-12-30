@@ -38,6 +38,7 @@ module Statistics
   def mean(o = {})
     #ratio of items to be excluded 
     #TODO : graceful degradation when no. of elements is high
+    return 0 if blank?
     if( o[:exclude] ) 
       exc_count = (o[:exclude] * 0.5 * size).to_i
       target = sort[exc_count..(size-1-exc_count)]
@@ -54,6 +55,7 @@ module Statistics
   end
   
   def gmean()
+    return 0 if blank?
     prod = 1.0
     each{|v|prod *= v}
     prod ** (1.0/size)

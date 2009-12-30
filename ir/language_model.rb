@@ -32,8 +32,8 @@ class LanguageModel
   end
   
   def prob(word)
-    return Math::MIN_PROB if @size == 0
-    return Math::MIN_PROB if !@f[word]
+    return $min_prob || Math::MIN_PROB if @size == 0
+    return $min_prob || Math::MIN_PROB if !@f[word]
     @f[word].to_f / @size
   end
   
